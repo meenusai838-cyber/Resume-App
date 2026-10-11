@@ -16,10 +16,22 @@ function ensureDatabase() {
   return connectDB(process.env.MONGODB_URI);
 }
 
+// CLIENT_ORIGIN may hold one origin or a comma-separated list. Trailing slashes and spaces are ignored,
+// so "https://site.vercel.app/" and "https://site.vercel.app" both match the browser's Origin header.
+const allowedOrigins = (process.env.CLIENT_ORIGIN || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+
+function corsOriginCheck(origin, callback) {
+  // Requests without an Origin header (curl, server-to-server) aren't browser CORS requests.
+  callback(null, !origin || allowedOrigins.includes(origin));
+}
+
 function createApp() {
   const app = express();
 
-  app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173" }));
+  app.use(cors({ origin: corsOriginCheck }));
   app.get("/api/health", (req, res) => res.json({ ok: true }));
   app.use("/api", async (req, res, next) => {
     try {
