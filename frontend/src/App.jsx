@@ -55,7 +55,8 @@ export default function App() {
     <>
       <header className="nav">
         <a className="logo" href="#">
-          0<span className="arrow">→</span>Shipped
+          <span className="logo-dot" aria-hidden="true" />
+          Callback
         </a>
         <nav>
           <a href="#demo">Try it</a>
@@ -65,13 +66,13 @@ export default function App() {
 
       <main>
         <section className="hero">
-          <p className="eyebrow">Mock build · scoring uses a skill list, AI comes later</p>
+          <p className="eyebrow">Resume × job match</p>
           <h1>
-            Score your resume <span className="accent">before a recruiter does.</span>
+            Know your match before <em>the callback.</em>
           </h1>
           <p className="sub">
-            Upload your resume PDF and paste a job description. See which required skills your
-            resume shows, and which ones it's missing.
+            Upload your resume PDF and paste a job description. See which required skills you
+            show, and which ones you're missing.
           </p>
         </section>
 
@@ -117,13 +118,15 @@ export default function App() {
               <div className="skills">
                 <SkillsPanel
                   variant="present"
-                  title="✓ Skills present"
+                  icon="✓"
+                  title="Skills present"
                   skills={result.matchedSkills}
                   emptyText="None of the job's skills were found on this resume."
                 />
                 <SkillsPanel
                   variant="missing"
-                  title="✗ Skills missing"
+                  icon="✗"
+                  title="Skills missing"
                   skills={result.missingSkills}
                   emptyText="Nothing missing. Every required skill is on the resume."
                 />
@@ -139,17 +142,17 @@ export default function App() {
         <section className="how" id="how">
           <h2>How it works</h2>
           <div className="steps">
-            <div className="step">
+            <div className="step glass">
               <span className="step-num">1</span>
               <h3>Upload</h3>
               <p>Drop in your resume PDF and paste the job description you're targeting.</p>
             </div>
-            <div className="step">
+            <div className="step glass">
               <span className="step-num">2</span>
               <h3>Compare</h3>
               <p>The backend reads the PDF text and finds the skills the job asks for.</p>
             </div>
-            <div className="step">
+            <div className="step glass">
               <span className="step-num">3</span>
               <h3>Score</h3>
               <p>You get a 0–100 score, the skills present, and the gaps to fill.</p>
@@ -159,7 +162,7 @@ export default function App() {
       </main>
 
       <footer>
-        <p>0 → Shipped · resume parser. Demo build: scoring is keyword-based for now.</p>
+        <p>Callback · resume parser. Scoring is keyword-based for now.</p>
       </footer>
     </>
   );

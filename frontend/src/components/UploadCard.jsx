@@ -26,8 +26,17 @@ export default function UploadCard({ file, onSelect, disabled }) {
       />
 
       <div
-        className={`upload-card${dragging ? " dragover" : ""}`}
+        className={`upload-card glass${dragging ? " dragover" : ""}`}
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled}
         onClick={openPicker}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openPicker();
+          }
+        }}
         onDragEnter={(e) => {
           e.preventDefault();
           setDragging(true);
@@ -39,7 +48,7 @@ export default function UploadCard({ file, onSelect, disabled }) {
         }}
         onDrop={handleDrop}
       >
-        <div className="upload-icon">📄</div>
+        <div className="upload-icon" aria-hidden="true">📄</div>
         {file ? (
           <>
             <p className="upload-title">{file.name}</p>

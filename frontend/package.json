@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "React UI for the 0 to Shipped resume parser",
+  "description": "React UI for the Callback resume parser",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

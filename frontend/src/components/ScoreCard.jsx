@@ -36,8 +36,8 @@ export default function ScoreCard({ score, fileName, matchedCount, totalCount })
   }, [score]);
 
   return (
-    <div className="score-card">
-      <div className="score-ring">
+    <div className="score-card glass">
+      <div className="score-ring" role="img" aria-label={`Match score ${score} out of 100`}>
         <svg viewBox="0 0 120 120" aria-hidden="true">
           <circle className="ring-bg" cx="60" cy="60" r={RING_RADIUS} />
           <circle
@@ -48,7 +48,7 @@ export default function ScoreCard({ score, fileName, matchedCount, totalCount })
             style={{ strokeDasharray: RING_CIRCUMFERENCE, strokeDashoffset: offset }}
           />
         </svg>
-        <div className="score-number">
+        <div className="score-number" aria-hidden="true">
           <span>{displayScore}</span>
           <small>/100</small>
         </div>
