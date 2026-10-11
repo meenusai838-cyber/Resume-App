@@ -102,9 +102,42 @@ main { max-width: 860px; margin: 0 auto; padding: 0 1.25rem; }
   text-decoration: underline;
 }
 
-/* analyzing state */
-.upload-analyzing { display: grid; place-items: center; gap: 0.9rem; padding: 1rem; }
-.upload-analyzing p { color: var(--muted); margin: 0; }
+/* ---------- form ---------- */
+.analyze-form { display: grid; gap: 1rem; }
+
+.field-label { font-weight: 600; font-size: 0.95rem; margin-top: 0.25rem; }
+
+.jd-input {
+  width: 100%;
+  min-height: 160px;
+  resize: vertical;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem;
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.jd-input::placeholder { color: var(--muted); }
+.jd-input:focus { outline: none; border-color: var(--accent); }
+
+.primary {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: #0b0e14;
+  border: none;
+  border-radius: 999px;
+  padding: 0.75rem 1.8rem;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.primary:disabled { opacity: 0.6; cursor: wait; }
 
 .spinner {
   width: 34px;
@@ -115,7 +148,19 @@ main { max-width: 860px; margin: 0 auto; padding: 0 1.25rem; }
   animation: spin 0.8s linear infinite;
 }
 
+.spinner.small {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+  border-color: rgba(11, 14, 20, 0.25);
+  border-top-color: #0b0e14;
+}
+
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.match-count { color: var(--muted); font-size: 0.9rem; margin: 0.25rem 0 0; }
+
+.empty { color: var(--muted); font-size: 0.9rem; margin: 0; }
 
 /* ---------- error ---------- */
 .error {
