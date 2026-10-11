@@ -11,7 +11,7 @@ function errorHandler(err, req, res, next) {
 
   if (err.code === "LIMIT_FILE_SIZE") {
     status = 413;
-    message = "Resume must be 5 MB or smaller.";
+    message = "Resume must be 4 MB or smaller.";
   }
   if (status >= 500) {
     console.error(err);

@@ -1,24 +1,19 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const { connectDB, isConnected } = require("./config/db");
+const { connectDB } = require("./config/db");
 const analysisRoutes = require("./routes/analysis");
 const { notFound, errorHandler } = require("./middleware/errorHandler");
 
 const PORT = process.env.PORT || 5000;
 
-// Serverless invocations share one connection attempt, so the database is opened once per instance.
-let dbPromise = null;
+// Makes sure the database is connected before any /api route runs.
+// connectDB caches the connection, so this is cheap after the first request on an instance.
 function ensureDatabase() {
-  if (isConnected()) return Promise.resolve();
   if (!process.env.MONGODB_URI) {
     return Promise.reject(new Error("MONGODB_URI is not set."));
   }
-  dbPromise ??= connectDB(process.env.MONGODB_URI).catch((err) => {
-    dbPromise = null; // allow the next request to retry
-    throw err;
-  });
-  return dbPromise;
+  return connectDB(process.env.MONGODB_URI);
 }
 
 function createApp() {
@@ -43,7 +38,8 @@ function createApp() {
 
 const app = createApp();
 
-// Vercel imports this module and handles requests itself. Only listen when run directly (npm run dev / start).
+// Vercel loads this module through api/index.js and sends requests to the exported app.
+// Only listen when the file is run directly (npm run dev / npm start).
 if (require.main === module) {
   ensureDatabase()
     .then(() => app.listen(PORT, () => console.log(`API listening on http://localhost:${PORT}`)))
