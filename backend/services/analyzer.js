@@ -2,6 +2,33 @@ const Anthropic = require("@anthropic-ai/sdk");
 
 const MODEL = "claude-haiku-5-5";
 
+// Long answers need room. 2048 tokens keeps the full structured result from being cut off.
+const MAX_TOKENS = 2048;
+
+// Tool use makes Claude return the result as structured input that matches this schema,
+// so the app doesn't have to parse free text. Field names match the API's snake_case keys.
+const RECORD_TOOL = {
+  name: "record_analysis",
+  description: "Record the resume-to-job match analysis.",
+  input_schema: {
+    type: "object",
+    properties: {
+      score: { type: "integer", minimum: 0, maximum: 100 },
+      fit: { type: "string", enum: ["strong fit", "possible fit", "not a fit yet"] },
+      resume_field: { type: "string" },
+      job_field: { type: "string" },
+      matched_skills: { type: "array", items: { type: "string" } },
+      missing_skills: { type: "array", items: { type: "string" } },
+      summary: { type: "string" },
+      tips: { type: "array", items: { type: "string" } },
+    },
+    required: ["score", "fit", "resume_field", "job_field", "matched_skills", "missing_skills", "summary", "tips"],
+  },
+};
+
+// A retry only makes sense if there is time left inside Vercel's 60-second limit.
+const RETRY_BEFORE_MS = 30_000;
+
 // Vercel's default function limit on the Hobby plan is 60 seconds (see vercel.json).
 // Each attempt gets 25 seconds, so one retry still answers before Vercel cuts the request off.
 const REQUEST_TIMEOUT_MS = 25_000;
@@ -29,7 +56,7 @@ Scoring:
 - score: an integer from 0 to 100 for how well the resume matches the job's requirements overall (skills, experience, qualifications, tools).
 - fit: "strong fit" when score is 75 or higher, "possible fit" when 50 to 74, "not a fit yet" when below 50.
 
-Respond with only a JSON object, with no markdown and no other text. Use exactly these keys:
+Record your answer by calling the record_analysis tool. Fill in these fields:
 {
   "score": integer from 0 to 100,
   "fit": "strong fit" | "possible fit" | "not a fit yet",
@@ -131,9 +158,53 @@ function normalizeAnalysis(data) {
   };
 }
 
+// Reads the analysis from a reply. Prefers the tool's structured input, and falls back to
+// JSON text (fences stripped, first { to last }) if the model answered in text instead.
+function readAnalysis(reply) {
+  const toolBlock = reply.content.find((block) => block.type === "tool_use" && block.name === RECORD_TOOL.name);
+  if (toolBlock) return toolBlock.input;
+
+  const text = reply.content
+    .filter((block) => block.type === "text")
+    .map((block) => block.text)
+    .join("");
+  return parseJsonReply(text.replace(/```(?:json)?/gi, ""));
+}
+
+// One request to Claude. Returns the normalized analysis. A reply that can't be read is
+// marked unreadable so the caller can retry it. API errors are thrown as friendly errors.
+async function requestAnalysis(anthropic, userMessage) {
+  let reply;
+  try {
+    reply = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: MAX_TOKENS,
+      system: SYSTEM_PROMPT,
+      tools: [RECORD_TOOL],
+      tool_choice: { type: "tool", name: RECORD_TOOL.name },
+      messages: [{ role: "user", content: userMessage }],
+    });
+  } catch (err) {
+    throw toFriendlyError(err);
+  }
+
+  try {
+    return normalizeAnalysis(readAnalysis(reply));
+  } catch (parseErr) {
+    // Logs the stop reason and what came back, so a bad reply can be diagnosed. The API key is never logged.
+    console.error(
+      `AI reply could not be read: ${parseErr.message}. stop_reason=${reply.stop_reason}. ` +
+        `raw=${JSON.stringify(reply.content)}`
+    );
+    throw Object.assign(parseErr, { unreadable: true });
+  }
+}
+
 // Sends the resume and job description to Claude and returns the normalized analysis.
+// If the reply can't be read, the request is retried once (when time allows) before showing an error.
 async function analyzeResume(resumeText, jobDescription) {
   const anthropic = getClient();
+  const started = Date.now();
 
   const userMessage = `<resume>
 ${resumeText.slice(0, MAX_RESUME_CHARS)}
@@ -143,28 +214,21 @@ ${resumeText.slice(0, MAX_RESUME_CHARS)}
 ${jobDescription.slice(0, MAX_JOB_CHARS)}
 </job_description>`;
 
-  let reply;
-  try {
-    reply = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 1500,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userMessage }],
-    });
-  } catch (err) {
-    throw toFriendlyError(err);
-  }
-
-  const text = reply.content
-    .filter((block) => block.type === "text")
-    .map((block) => block.text)
-    .join("");
+  const unreadableError = () => aiError(502, "The AI's answer couldn't be read. Please try again.");
 
   try {
-    return normalizeAnalysis(parseJsonReply(text));
-  } catch (parseErr) {
-    console.error("Could not read AI reply:", parseErr.message, text.slice(0, 300));
-    throw aiError(502, "The AI's answer couldn't be read. Please try again.");
+    return await requestAnalysis(anthropic, userMessage);
+  } catch (firstErr) {
+    if (!firstErr.unreadable) throw firstErr;
+    if (Date.now() - started > RETRY_BEFORE_MS) throw unreadableError();
+
+    console.error("Retrying analysis once after an unreadable reply.");
+    try {
+      return await requestAnalysis(anthropic, userMessage);
+    } catch (secondErr) {
+      if (!secondErr.unreadable) throw secondErr;
+      throw unreadableError();
+    }
   }
 }
 
