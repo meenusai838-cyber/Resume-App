@@ -338,12 +338,28 @@ main { max-width: 880px; margin: 0 auto; padding: 0 20px; }
   font-weight: 500;
 }
 
-.verdict {
-  margin: 0;
-  font-family: var(--font-serif);
-  font-size: 1.5rem;
-  font-weight: 500;
-  line-height: 1.25;
+.fit-badge {
+  display: inline-block;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.fit-strong { background: rgba(15, 107, 79, 0.14); color: var(--green); }
+.fit-possible { background: rgba(148, 187, 233, 0.35); color: var(--ink); }
+.fit-none { background: rgba(163, 32, 58, 0.1); color: var(--red); }
+
+.field-line {
+  margin: 0.6rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+.field-line strong { color: var(--ink); font-weight: 600; }
+
+.summary {
+  margin: 0.6rem 0 0;
+  color: var(--ink);
+  font-size: 0.97rem;
 }
 
 .match-count {
@@ -435,6 +451,72 @@ main { max-width: 880px; margin: 0 auto; padding: 0 20px; }
   border-color: var(--accent);
   background: rgba(255, 255, 255, 0.85);
   color: var(--accent);
+}
+
+/* tips */
+.tips-card { padding: 22px; }
+
+.tips-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 14px;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.tips-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 1.4rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+/* celebration popup */
+.celebrate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(30, 42, 74, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: fade-in 0.25s ease both;
+}
+
+.celebrate-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 36px 28px 28px;
+  text-align: center;
+  animation: pop-in 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  background: var(--glass-strong);
+}
+
+.celebrate-icon { font-size: 2.75rem; line-height: 1; }
+
+.celebrate-card h2 {
+  margin: 0.9rem 0 0.5rem;
+  font-family: var(--font-serif);
+  font-size: 1.7rem;
+  font-weight: 500;
+}
+
+.celebrate-card p {
+  margin: 0 0 1.5rem;
+  color: var(--ink-soft);
+}
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.9) translateY(10px); }
+  to { opacity: 1; transform: none; }
 }
 
 /* ---------- how it works ---------- */

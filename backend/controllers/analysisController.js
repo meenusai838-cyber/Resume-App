@@ -7,8 +7,13 @@ const formatAnalysis = (doc) => ({
   id: String(doc._id),
   resumeFileName: doc.resumeFileName,
   score: doc.score,
+  fit: doc.fit,
+  resumeField: doc.resumeField,
+  jobField: doc.jobField,
   matchedSkills: doc.matchedSkills,
   missingSkills: doc.missingSkills,
+  summary: doc.summary,
+  tips: doc.tips,
   createdAt: doc.createdAt,
 });
 
@@ -36,7 +41,7 @@ async function analyzeUpload(req, res) {
     );
   }
 
-  const result = analyzeResume(resumeText, jobDescription);
+  const result = await analyzeResume(resumeText, jobDescription);
   const saved = await saveAnalysis({
     resumeFileName: req.file.originalname,
     jobDescription,

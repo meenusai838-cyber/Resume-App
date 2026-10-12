@@ -3,15 +3,27 @@ import { useEffect, useState } from "react";
 const RING_RADIUS = 52;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
-function verdictFor(score) {
-  if (score >= 80) return "Strong: interview-ready.";
-  if (score >= 65) return "Solid draft: a few gaps to close.";
-  if (score >= 50) return "Needs work: key skills aren't showing.";
-  return "Weak: recruiters will skim past this.";
-}
+// Label and color class for each fit value the backend returns.
+const FIT_STYLES = {
+  "strong fit": { label: "Strong fit", className: "fit-strong" },
+  "possible fit": { label: "Possible fit", className: "fit-possible" },
+  "not a fit yet": { label: "Not a fit yet", className: "fit-none" },
+};
 
 // Shows the 0-100 score ring, counting up and sweeping to the score on mount.
-export default function ScoreCard({ score, fileName, matchedCount, totalCount }) {
+// Also shows the fit verdict, both fields, and the summary.
+export default function ScoreCard({
+  score,
+  fit,
+  resumeField,
+  jobField,
+  summary,
+  fileName,
+  matchedCount,
+  totalCount,
+}) {
+  const fitStyle = FIT_STYLES[fit] ?? FIT_STYLES["not a fit yet"];
+
   const [displayScore, setDisplayScore] = useState(0);
   const [offset, setOffset] = useState(RING_CIRCUMFERENCE);
 
@@ -54,10 +66,16 @@ export default function ScoreCard({ score, fileName, matchedCount, totalCount })
         </div>
       </div>
       <div className="score-meta">
-        <p className="verdict">{verdictFor(score)}</p>
-        <p className="match-count">
-          {matchedCount} of {totalCount} skills from the job description found on the resume
+        <span className={`fit-badge ${fitStyle.className}`}>{fitStyle.label}</span>
+        <p className="field-line">
+          Your field: <strong>{resumeField}</strong> · Job field: <strong>{jobField}</strong>
         </p>
+        {summary && <p className="summary">{summary}</p>}
+        {totalCount > 0 && (
+          <p className="match-count">
+            {matchedCount} of {totalCount} skills from the job description found on the resume
+          </p>
+        )}
         <p className="file-name">{fileName}</p>
       </div>
     </div>

@@ -1,8 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { analyzeResume } from "./api.js";
 import UploadCard from "./components/UploadCard.jsx";
 import ScoreCard from "./components/ScoreCard.jsx";
 import SkillsPanel from "./components/SkillsPanel.jsx";
+import TipsCard from "./components/TipsCard.jsx";
+import CelebrationPopup from "./components/CelebrationPopup.jsx";
+import { fireCelebration } from "./celebrate.js";
 
 export default function App() {
   const [file, setFile] = useState(null);
@@ -10,11 +13,24 @@ export default function App() {
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [showCelebration, setShowCelebration] = useState(false);
   const resultsRef = useRef(null);
+  // Remembers which result already celebrated. Refs survive StrictMode's double effect run in dev,
+  // so the confetti fires once per result.
+  const celebratedId = useRef(null);
 
   useEffect(() => {
     if (result) resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [result]);
+
+  useEffect(() => {
+    if (!result || result.fit !== "strong fit" || celebratedId.current === result.id) return;
+    celebratedId.current = result.id;
+    setShowCelebration(true);
+    fireCelebration();
+  }, [result]);
+
+  const closeCelebration = useCallback(() => setShowCelebration(false), []);
 
   function chooseFile(selected) {
     if (!selected) return;
@@ -47,6 +63,7 @@ export default function App() {
     setResult(null);
     setFile(null);
     setError("");
+    setShowCelebration(false);
   }
 
   const totalSkills = result ? result.matchedSkills.length + result.missingSkills.length : 0;
@@ -110,6 +127,10 @@ export default function App() {
               <ScoreCard
                 key={result.id}
                 score={result.score}
+                fit={result.fit}
+                resumeField={result.resumeField}
+                jobField={result.jobField}
+                summary={result.summary}
                 fileName={result.resumeFileName}
                 matchedCount={result.matchedSkills.length}
                 totalCount={totalSkills}
@@ -132,11 +153,15 @@ export default function App() {
                 />
               </div>
 
+              <TipsCard tips={result.tips} />
+
               <button className="ghost" type="button" onClick={reset}>
                 Try another resume
               </button>
             </section>
           )}
+
+          {showCelebration && <CelebrationPopup onClose={closeCelebration} />}
         </section>
 
         <section className="how" id="how">
@@ -150,19 +175,19 @@ export default function App() {
             <div className="step glass">
               <span className="step-num">2</span>
               <h3>Compare</h3>
-              <p>The backend reads the PDF text and finds the skills the job asks for.</p>
+              <p>Claude reads your resume against the job, in any field, and weighs transferable skills.</p>
             </div>
             <div className="step glass">
               <span className="step-num">3</span>
               <h3>Score</h3>
-              <p>You get a 0–100 score, the skills present, and the gaps to fill.</p>
+              <p>You get a 0–100 score, a fit verdict, the skills and gaps, and tips to improve.</p>
             </div>
           </div>
         </section>
       </main>
 
       <footer>
-        <p>Callback · resume parser. Scoring is keyword-based for now.</p>
+        <p>Callback · resume matching for any job field, powered by Claude.</p>
       </footer>
     </>
   );

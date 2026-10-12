@@ -15,7 +15,8 @@ function errorHandler(err, req, res, next) {
   }
   if (status >= 500) {
     console.error(err);
-    message = "Something went wrong on the server.";
+    // Errors marked expose (such as AI service errors) already have a message that is safe to show.
+    if (!err.expose) message = "Something went wrong on the server.";
   }
 
   res.status(status).json({ error: message });
